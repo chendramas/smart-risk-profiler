@@ -1,26 +1,44 @@
 # Smart Risk Profiler
 
-Profil risiko investasi berdasarkan framework CFA Institute Investment Risk Profile (IRP).
+https://smart-risk-profiler.streamlit.app
 
-## Features
+Alat profiling risiko investasi untuk advisor dan investor retail. Input data diri, jawab skenario behavioral, dapatkan profil risiko lengkap dengan rekomendasi alokasi aset.
 
-- **Risk Number 1-99** — skala kontinu ala Nitrogen/Riskalyze
-- **Behavioral Analysis** — 5 komponen: composure, preference, perception, knowledge, experience
-- **Financial Health Check** — dana darurat, rasio utang, tanggungan, net worth, kepemilikan rumah
-- **Loss Aversion Test** — berdasarkan Kahneman & Tversky Prospect Theory
-- **Overconfidence Detection** — consistency checks antar skenario
-- **Goal-Based Risk Need** — kalkulator return yang dibutuhkan per tujuan finansial
-- **Traffic Light Reconciliation** — Green/Yellow/Red berdasarkan CFA IRP
-- **Dark/Light Mode** — full theme support
-- **IDX/IHSG/Rupiah** — localized untuk pasar Indonesia
+## Apa yang didapat user
 
-## Run
+- **Risk Number 1-99** — skor kontinu yang langsung bisa dipahami, bukan cuma label konservatif/moderat/agresif
+- **Rekomendasi alokasi aset** — persentase per instrumen (RDPU, obligasi, saham, emas, crypto) sesuai profil
+- **Behavioral breakdown** — radar chart 5 komponen: ketahanan emosional, preferensi risiko, persepsi pasar, pengetahuan finansial, pengalaman investasi
+- **Capacity vs Tolerance** — apakah user mampu secara finansial atau hanya berani secara psikologis
+- **Financial health score** — skor kesehatan finansial dari 5 pertanyaan objektif
+- **Loss aversion coefficient** — berapa x lebih sakit loss dibanding gain (Kahneman)
+- **Goal-based analysis** — return yang dibutuhkan per tujuan finansial (rumah, nikah, pensiun, dll)
+- **Traffic light reconciliation** — apakah semua faktor sejalan atau ada kontradiksi
+- **Export** — download hasil sebagai .txt atau kartu .png
+
+## Untuk siapa
+
+- **Financial advisor** — tool profiling klien sebelum rekomendasi investasi
+- **Investor retail** — self-assessment sebelum mulai investasi
+- **Edukasi** — belajar risk tolerance dan behavioral finance
+
+## Framework
+
+Semua pertanyaan dan scoring berdasarkan:
+- CFA Institute Investment Risk Profile (IRP)
+- Kahneman & Tversky Prospect Theory
+- Hasanah, Wiryono & Koesrindartoto (2024) — ITB
+- Wealthfront Portfolio Methodology
+- Grable & Lytton (1999) Risk Tolerance Scale
+- Nitrogen/Riskalyze Risk Number methodology
+
+## Run lokal
 
 ```bash
 ./run.sh
 ```
 
-Atau manual:
+Atau:
 
 ```bash
 source venv/bin/activate
@@ -29,9 +47,8 @@ streamlit run app.py
 
 ## Stack
 
-- Python, Streamlit, Plotly
-- CFA Institute IRP framework
+Python, Streamlit, Plotly
 
 ## Docs
 
-Lihat folder `docs/` untuk penjelasan lengkap setiap modul beserta referensi akademik.
+Folder `docs/` berisi penjelasan lengkap setiap modul beserta referensi akademik.
