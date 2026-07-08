@@ -1,26 +1,12 @@
-# Goal-Based Risk Need Calculator — Betterment/CFA IRP Model
 import streamlit as st
 import math
-
-# ─────────────────────────────────────────────────────────────
-# SUMBER & ALASAN
-# ─────────────────────────────────────────────────────────────
-# Source: CFA Institute IRP Factor 1: Risk Need
-# Source: Betterment — goal-based investing, each goal gets own risk profile
-# Source: FinaMetrica/Oxford Risk — Risk Required vs Risk Capacity
-#
-# Risk Need = return yang DIBUTUHKAN untuk mencapai tujuan.
-# Kalau Risk Need > Risk Capacity → RED LIGHT (CFA IRP).
-# Artinya: tujuan lo ga realistis dengan kondisi finansial lo.
-#
-# Lihat docs/09_goal_based.md untuk penjelasan lengkap.
 
 FINANCIAL_GOALS = [
     {
         "key": "rumah",
         "label": "Beli Rumah",
         "icon": "🏠",
-        "default_amount": 500_000_000,  # Rp 500 juta
+        "default_amount": 500_000_000,
         "default_years": 5,
         "description": "Target dana untuk DP atau beli rumah",
     },
@@ -28,7 +14,7 @@ FINANCIAL_GOALS = [
         "key": "darurat",
         "label": "Dana Darurat",
         "icon": "🏦",
-        "default_amount": 100_000_000,  # Rp 100 juta
+        "default_amount": 100_000_000,
         "default_years": 1,
         "description": "Dana cadangan untuk keadaan darurat",
     },
@@ -36,7 +22,7 @@ FINANCIAL_GOALS = [
         "key": "nikah",
         "label": "Dana Nikah",
         "icon": "💍",
-        "default_amount": 200_000_000,  # Rp 200 juta
+        "default_amount": 200_000_000,
         "default_years": 3,
         "description": "Target dana untuk pernikahan",
     },
@@ -44,7 +30,7 @@ FINANCIAL_GOALS = [
         "key": "pensiun",
         "label": "Dana Pensiun",
         "icon": "🏖️",
-        "default_amount": 5_000_000_000,  # Rp 5 miliar
+        "default_amount": 5_000_000_000,
         "default_years": 25,
         "description": "Target dana untuk pensiun nyaman",
     },
@@ -52,24 +38,20 @@ FINANCIAL_GOALS = [
         "key": "pendidikan",
         "label": "Dana Pendidikan Anak",
         "icon": "🎓",
-        "default_amount": 500_000_000,  # Rp 500 juta
+        "default_amount": 500_000_000,
         "default_years": 15,
         "description": "Target dana untuk pendidikan anak",
     },
 ]
 
-# Indonesian inflation rate (approximate)
-INFLATION_RATE = 0.04  # 4% per tahun
+INFLATION_RATE = 0.04
 
 
 def calculate_required_return(target_amount, current_savings, years, monthly_contribution=0):
     """
-    Hitung required annual return untuk mencapai target.
+    Calculate required annual return to reach a target.
     
-    Formula: FV = PV*(1+r)^n + PMT*[((1+r)^n - 1)/r]
-    Solve for r using Newton's method approximation.
-    
-    Source: CFA Institute — Time Value of Money
+    Uses binary search to solve: FV = PV*(1+r)^n + PMT*[((1+r)^n - 1)/r]
     """
     if years <= 0:
         return 0
@@ -77,15 +59,13 @@ def calculate_required_return(target_amount, current_savings, years, monthly_con
     pv = current_savings
     fv = target_amount
     n = years
-    pmt = monthly_contribution * 12  # annual contribution
+    pmt = monthly_contribution * 12
     
-    # If monthly contribution + current savings already covers it
     total_contributions = pv + (pmt * n)
     if total_contributions >= fv:
-        return 0  # No return needed
+        return 0
     
-    # Binary search for required return
-    low, high = -0.05, 0.50  # -5% to 50%
+    low, high = -0.05, 0.50
     for _ in range(100):
         mid = (low + high) / 2
         r = mid
@@ -99,19 +79,14 @@ def calculate_required_return(target_amount, current_savings, years, monthly_con
         else:
             high = mid
     
-    return round(mid * 100, 1)  # Return as percentage
+    return round(mid * 100, 1)
 
 
 def get_risk_need_level(required_return):
     """
-    Kategorikan risk need berdasarkan required return.
-    
-    Source: CFA Institute IRP — Risk Need categories
-    - Low: < 5% per tahun (bisa dicapai dengan instrumen aman)
-    - Moderate: 5-10% per tahun (butuh campuran saham + obligasi)
-    - High: > 10% per tahun (butuh porsi saham/signifikan)
+    Categorize risk need based on required return (adjusted for Indonesian inflation).
+    RENDAH: < 5% real return, SEDANG: 5-10%, TINGGI: > 10%
     """
-    # Adjusted for Indonesia: tambahin inflasi
     real_return = required_return - (INFLATION_RATE * 100)
     
     if real_return <= 3:
@@ -124,10 +99,10 @@ def get_risk_need_level(required_return):
 
 def calculate_goal_analysis(goals_data):
     """
-    Analisis semua tujuan finansial user.
+    Analyze all user financial goals.
     
     Returns:
-        dict per goal: required_return, risk_need_level, real_return
+        dict per goal: required_return, risk_need_level, real_target
         overall: highest risk need, red light flag
     """
     results = {}
@@ -144,7 +119,6 @@ def calculate_goal_analysis(goals_data):
         req_return = calculate_required_return(target, current, years, monthly)
         level, color, description = get_risk_need_level(req_return)
         
-        # Inflation-adjusted target
         real_target = target / ((1 + INFLATION_RATE) ** years)
         
         results[goal["key"]] = {
@@ -162,7 +136,6 @@ def calculate_goal_analysis(goals_data):
             "inflation_impact": round(target - real_target),
         }
         
-        # Track highest need
         if level == "TINGGI":
             highest_need = "TINGGI"
             red_light = True
@@ -189,7 +162,6 @@ def render_step_goals():
         </p>
         <p style="color: #888; font-size: 13px; margin: 0;">
             Isi tujuan lo (opsional). Ini bantu hitung berapa return yang lo BUTUHKAN.
-            <br>Source: CFA Institute IRP Factor 1 — Risk Need; Betterment goal-based investing
         </p>
     </div>
     """)

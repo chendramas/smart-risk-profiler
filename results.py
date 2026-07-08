@@ -1,4 +1,3 @@
-# Results Display — All fixes + improvements
 import streamlit as st
 import plotly.graph_objects as go
 from config import CHART_COLORS, COLORS, PROFILE_BADGES, COMPARISON_PERCENTILES, COMPARISON_PCT, ALLOCATIONS, BEHAVIORAL_LABELS, BAR_COLORS
@@ -10,13 +9,12 @@ from card_generator import generate_result_card
 
 
 def _get_comparison_text(score, max_score):
-    """FIXED: always return tuple (label, pct)."""
+    """Return (label, percentile) for the score."""
     ratio = score / max_score
     for i, (threshold, label) in enumerate(COMPARISON_PERCENTILES):
         if ratio <= threshold:
             pct = COMPARISON_PCT[i]
             return label, pct
-    # Fallback: always return tuple
     return COMPARISON_PERCENTILES[-1][1], COMPARISON_PCT[-1]
 
 
@@ -66,15 +64,12 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         _text_muted = "#888888"; _green = "#00CC6A"; _blue = "#0099CC"
         _plot_bg = "#ffffff"; _grid = "#e0e0e0"; _tick = "#888888"
 
-    # GATE balloons — only on first view, not on refresh
     if "balloons_shown" not in st.session_state:
         st.balloons()
         st.session_state.balloons_shown = True
 
     badge_emoji = PROFILE_BADGES.get(profil_name, "")
     profile_banner(nama, profil_name, profile_data["border"], profile_data["bg"], score, max_score, badge_emoji)
-
-    # Score rendered directly in banner HTML — no JS counter needed
 
     # ---- RISK NUMBER GAUGE + SCALE BAR (1-99) ----
     if risk_number and risk_details:
@@ -85,7 +80,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         rn_return = risk_details["expected_return"]
         rn_drawdown = risk_details["max_drawdown"]
 
-        # Gauge — conic-gradient ring + big number (rendered in st.html)
         needle_angle = ((risk_number - 1) / 98) * 270
         arc_bg = "#1a1a1a" if dark_mode else "#e8e8e8"
 
@@ -143,7 +137,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         """)
 
         # ---- RISK SCALE BAR (1-99 horizontal) ----
-        # Position percentage: (risk_number - 1) / 98 * 100
         marker_pos = (risk_number - 1) / 98 * 100
         zones = [
             (0, 20, "Very Conservative", "#00FF88"),
@@ -183,14 +176,12 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         </div>
         """)
 
-        # Risk metrics
         col_ret, col_dd = st.columns(2)
         with col_ret:
             st.metric("Expected Return", rn_return, help="Estimasi return tahunan berdasarkan profil risiko")
         with col_dd:
             st.metric("Max Drawdown", rn_drawdown, help="Estimasi penurunan maksimal dalam kondisi pasar buruk")
 
-        # Suggested allocation
         st.html(f"""
         <p style="font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: {_text_sec}; margin: 1.5rem 0 0.75rem;">Alokasi yang Disarankan</p>
         """)
@@ -199,10 +190,8 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
             with alloc_cols[i]:
                 st.metric(label=asset, value=f"{pct}%")
 
-    # Extract growth_potential from profile_meta
     growth_potential = profile_meta.get("growth_potential", 0) if profile_meta else 0
 
-    # Description
     st.html(f"""
     <div class="section-appear" style="max-width: 580px; margin: 0 auto 3rem; text-align: center;">
         <p style="color: {_text_sec}; font-size: 15px; line-height: 1.8; margin: 0;">{profile_data["desc"]}</p>
@@ -239,7 +228,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
     responses = st.session_state.result.get("responses", [])
     behavioral = get_behavioral_breakdown(responses)
 
-    # Radar chart
     radar_labels = [v["label"] for v in behavioral.values()]
     radar_pcts = [v["pct"] for v in behavioral.values()]
 
@@ -269,7 +257,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
     )
     st.plotly_chart(fig_radar, width="stretch")
 
-    # Behavioral component cards with tooltips
     tooltip_descriptions = {
         "Risk Composure": "Kemampuan lo tetap tenang & gak panik saat market crash",
         "Risk Preference": "Seberapa besar keinginan lo untuk ambil risiko demi return lebih tinggi",
@@ -280,7 +267,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
 
     for cat, data in behavioral.items():
         tooltip = tooltip_descriptions.get(cat, "")
-        # Use config colors (single source of truth)
         if cat in BEHAVIORAL_LABELS:
             data["color"] = BEHAVIORAL_LABELS[cat]["color"]
         st.html(f"""
@@ -327,7 +313,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
     </div>
     """)
 
-    # Growth potential indicator
     if growth_potential > 10:
         st.html(f"""
         <div class="section-appear" style="padding: 1rem 1.25rem; background: {_card_bg2}; border: 1px solid {_border}; border-radius: 12px; margin: 1rem 0; display: flex; align-items: center; gap: 1rem;">
@@ -404,7 +389,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         </div>
         """)
 
-        # Financial health breakdown bars
         for key, item in fh_data["breakdown"].items():
             bar_pct = round(item["score"] / item["max"] * 100) if item["max"] > 0 else 0
             bar_color = "#00FF88" if bar_pct >= 70 else "#FFB800" if bar_pct >= 40 else "#FF3366"
@@ -464,7 +448,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
             <p class="insight-text">{la_result['interpretation']}</p>
         </div>
         """)
-        # Behavioral breakdown
         for key, item in la_result.get("breakdown", {}).items():
             st.html(f"""
             <div class="section-appear tip-item" style="padding: 0.75rem 1.25rem;">
@@ -475,7 +458,7 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
             </div>
             """)
 
-    # ---- SCORE BREAKDOWN (IMPROVED) ----
+    # ---- SCORE BREAKDOWN ----
     _animated_section_header("Rincian Skor", "Score Breakdown", "#00BFFF")
 
     breakdown_max = get_breakdown_max()
@@ -484,12 +467,10 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
     maxes = [breakdown_max[k] for k in labels]
     pcts = [round(v / m * 100) for v, m in zip(values, maxes)]
 
-    # IMPROVED chart: horizontal bars with gradient colors per category
     bar_colors = BAR_COLORS
     
     fig_breakdown = go.Figure()
     
-    # Add bars in reverse order so first item appears at top
     for i in reversed(range(len(labels))):
         fig_breakdown.add_trace(go.Bar(
             y=[labels[i]],
@@ -551,7 +532,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
         font=dict(family='JetBrains Mono', size=20, color=profile_data["border"]),
         showarrow=False
     )
-    # Fix pie text color for light mode
     if not dark_mode:
         fig.update_traces(textfont=dict(color='#333333'))
     st.plotly_chart(fig, width="stretch")
@@ -578,7 +558,6 @@ def show_results(nama, score, profil_name, profile_data, max_score, breakdown,
 
     col_dl1, col_dl2, col_dl3 = st.columns(3)
 
-    # Summary text
     summary_lines = [
         "SMART RISK PROFILER — Hasil Analisis (CFA Framework)",
         "=" * 50,

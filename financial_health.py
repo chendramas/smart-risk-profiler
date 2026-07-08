@@ -1,12 +1,5 @@
-# Financial Health Module — CFA IRP Factor 2 + Hasanah et al. 2024
 import streamlit as st
 from components import section_title
-
-# ─────────────────────────────────────────────────────────────
-# PERTANYAAN & SUMBER
-# ─────────────────────────────────────────────────────────────
-# Setiap pertanyaan punya 'source' dan 'reason' untuk dokumentasi.
-# Lihat docs/04_financial_health.md untuk penjelasan lengkap.
 
 FINANCIAL_HEALTH_QUESTIONS = [
     {
@@ -23,9 +16,6 @@ FINANCIAL_HEALTH_QUESTIONS = [
         ],
         "scores": [0, 1, 2, 3, 4],
         "source": "Hasanah, Wiryono & Koesrindartoto (2024) — ITB; CFA Institute IRP Factor 2",
-        "reason": "Dana darurat adalah faktor #1 yang membedakan 'bisa rugi' vs 'ga bisa rugi'. "
-                  "Studi ITB 2024 menemukan ini pertanyaan paling kritis yang dipake robo-advisor internasional. "
-                  "Tanpa dana darurat, investor cenderung panic-sell karena butuh uang mendesak.",
     },
     {
         "key": "rasio_utang",
@@ -41,9 +31,6 @@ FINANCIAL_HEALTH_QUESTIONS = [
         ],
         "scores": [4, 3, 2, 1, 0],
         "source": "CFA Institute IRP Factor 2 (Liquidity Need); Standar robo-advisor (Wealthfront, Betterment)",
-        "reason": "Rasio utang tinggi = liquidity need tinggi = capacity rendah. "
-                  "CFA IRP mengkategorikan ini sebagai komponen Risk-Taking Ability. "
-                  "Orang dengan utang 60%+ ga punya buffer untuk absorb loss tanpa dampak serius.",
     },
     {
         "key": "tanggungan",
@@ -59,9 +46,6 @@ FINANCIAL_HEALTH_QUESTIONS = [
         ],
         "scores": [4, 3, 2, 1, 0],
         "source": "Hasanah et al. (2024) — ITB; Private bank suitability assessment (UBS, JPM PB)",
-        "reason": "Tanggungan = komitmen finansial tetap yang ga bisa di-cut. "
-                  "Studi ITB 2024 menemukan jumlah tanggungan signifikan mempengaruhi risk capacity. "
-                  "Private bank selalu faktor ini dalam suitability assessment.",
     },
     {
         "key": "net_worth",
@@ -77,9 +61,6 @@ FINANCIAL_HEALTH_QUESTIONS = [
         ],
         "scores": [0, 1, 2, 3, 4],
         "source": "Grable & Chatterjee (2026) — Journal of Financial Planning 39(1); SCF 2016",
-        "reason": "Net worth = prediktor TERKUAT alokasi portofolio (p < .001, Grable & Chatterjee 2026). "
-                  "Lebih prediktif dari income, education, atau umur. "
-                  "Survey of Consumer Finances (Federal Reserve) pake ini sejak 1983.",
     },
     {
         "key": "kepemilikan_rumah",
@@ -94,18 +75,15 @@ FINANCIAL_HEALTH_QUESTIONS = [
         ],
         "scores": [1, 1, 3, 4],
         "source": "Hasanah et al. (2024) — ITB; Common in robo-advisor questionnaires",
-        "reason": "Rumah = aset terbesar kebanyakan orang Indonesia. "
-                  "Status KPR vs lunas sangat mempengaruhi liquidity need dan risk capacity. "
-                  "Studi ITB 2024 menemukan ini salah satu dari 3 pertanyaan kritis robo-advisor.",
     },
 ]
 
 
 def get_financial_health_score(answers):
-    """Hitung skor kesehatan finansial dari jawaban user.
+    """Calculate financial health score from user answers.
     
     Returns:
-        dict: score, max, pct, breakdown per pertanyaan, risk_level
+        dict: score, max, pct, breakdown per question, risk_level
     """
     total_score = 0
     max_score = 0
@@ -130,7 +108,6 @@ def get_financial_health_score(answers):
 
     pct = round(total_score / max_score * 100) if max_score > 0 else 0
 
-    # Risk level berdasarkan financial health
     if pct >= 70:
         risk_level = "SEHAT"
         risk_color = "#00FF88"

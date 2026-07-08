@@ -1,5 +1,3 @@
-# Konfigurasi & Constants
-
 PAGE_CONFIG = {
     "page_title": "Smart Risk Profiler",
     "page_icon": "🎯",
@@ -96,7 +94,6 @@ def get_allocations(dark_mode=True):
 # Static fallback for non-UI code (scoring.py imports this)
 ALLOCATIONS = get_allocations(dark_mode=True)
 
-# Chart Colors — Vibrant
 CHART_COLORS = ["#00FF88", "#00D4FF", "#00CCFF", "#66FFB3", "#99FFCC"]
 
 # Behavioral category labels — single source of truth
@@ -108,7 +105,6 @@ BEHAVIORAL_LABELS = {
     "Investing Experience": {"label": "Pengalaman Investasi", "icon": "📈", "color": "#A855F7"},
 }
 
-# Chart bar colors for Score Breakdown
 BAR_COLORS = ['#00FF88', '#00E67A', '#00CC7A', '#00D4FF', '#00BBDD', '#00AACC', '#FFB800', '#FF9933', '#FF3366']
 
 # Scoring Weights
@@ -116,14 +112,12 @@ MAX_USIA_SCORE = 3
 MAX_HORIZON_SCORE = 4
 MAX_PENGHASILAN_SCORE = 2
 
-# Badge emoji per profil
 PROFILE_BADGES = {
     "KONSERVATIF": "🛡️",
     "MODERAT": "⚖️",
     "AGRESIF": "🚀",
 }
 
-# Comparison percentiles
 COMPARISON_PERCENTILES = [
     (0.20, "lebih konservatif dari"),
     (0.35, "sedikit lebih konservatif dari"),

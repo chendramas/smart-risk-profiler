@@ -1,4 +1,3 @@
-# Reusable UI Components — Dual theme support
 import html
 import streamlit as st
 from config import COLORS_DARK, COLORS_LIGHT

@@ -1,14 +1,5 @@
-# Questions & Form Logic — Scientifically-backed (CFA Institute framework)
 import streamlit as st
 from components import section_title, scenario_text
-
-# Framework: CFA Institute's 3-Factor IRP Model
-# Factor 1: Risk Need (handled by usia + penghasilan + horizon)
-# Factor 2: Risk-Taking Ability (handled by usia + penghasilan + horizon)
-# Factor 3: Behavioral Loss Tolerance (6 komponen, diukur via skenario)
-#
-# Urutan options HARUS dari paling konservatif -> paling agresif.
-# scoring.py ngambil skor dari posisi index (0 = skor 1, dst).
 
 SCENARIOS = [
     # === RISK COMPOSURE (behavioral reaction) ===
@@ -22,7 +13,6 @@ SCENARIOS = [
         "key": "r1",
         "context": "Mirip kejadian IHSG turun 20% di Maret 2020 (COVID crash)"
     },
-    # === RISK COMPOSURE (behavioral reaction - gain scenario) ===
     {
         "number": 2,
         "category": "Risk Composure",
@@ -33,7 +23,6 @@ SCENARIOS = [
         "key": "r2",
         "context": None
     },
-    # === RISK COMPOSURE (worst-case scenario) ===
     {
         "number": 3,
         "category": "Risk Composure",
@@ -55,7 +44,6 @@ SCENARIOS = [
         "key": "r4",
         "context": None
     },
-    # === RISK PREFERENCE (guaranteed vs uncertain) ===
     {
         "number": 5,
         "category": "Risk Preference",
@@ -86,7 +74,7 @@ SCENARIOS = [
         "suffix": "?",
         "options": ["Semua di 1 saham blue-chip IDX", "Split ke 5 saham IDX berbeda", "Split ke saham + obligasi + emas", "Gak tau"],
         "key": "r7",
-        "context": "Quiz pengetahuan dasar diversifikasi (CFA Institute knowledge test)"
+        "context": "Quiz pengetahuan dasar diversifikasi"
     },
     # === INVESTING EXPERIENCE ===
     {
@@ -138,7 +126,6 @@ def render_step_skenario():
         responses = []
         current_category = None
         for s in SCENARIOS:
-            # Category separator
             if s["category"] != current_category:
                 current_category = s["category"]
                 category_labels = {

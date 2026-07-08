@@ -1,4 +1,3 @@
-# Scoring Logic — CFA Institute 3-Factor IRP Model
 from config import ALLOCATIONS, MAX_USIA_SCORE, MAX_HORIZON_SCORE, MAX_PENGHASILAN_SCORE, BEHAVIORAL_LABELS
 from questions import SCENARIOS
 from overconfidence import detect_overconfidence
@@ -7,10 +6,9 @@ from financial_health import get_financial_health_score
 
 def get_score_breakdown(usia, penghasilan, horizon, responses):
     """
-    Single source of truth buat scoring.
-    Framework: CFA Institute Investment Risk Profile (IRP)
-    - Factor 1 & 2 (Risk Need + Risk-Taking Ability): usia, penghasilan, horizon
-    - Factor 3 (Behavioral Loss Tolerance): 5 komponen dari skenario
+    Calculate scoring breakdown using CFA Institute 3-Factor IRP Model.
+    Factor 1 & 2 (Risk Need + Risk-Taking Ability): usia, penghasilan, horizon.
+    Factor 3 (Behavioral Loss Tolerance): averaged per category from scenarios.
     """
     breakdown = {}
 
@@ -47,14 +45,12 @@ def get_score_breakdown(usia, penghasilan, horizon, responses):
 
 
 def get_breakdown_max():
-    """Skor maksimum per komponen (rata-rata per kategori, bukan max)."""
+    """Max score per component (averaged per category)."""
     base = {
         "Usia": MAX_USIA_SCORE,
         "Penghasilan": MAX_PENGHASILAN_SCORE,
         "Horizon": MAX_HORIZON_SCORE,
     }
-    # Max per category = average max (sum of option counts / count of scenarios)
-    # This matches how get_score_breakdown() calculates averages
     category_sums = {}
     category_counts = {}
     for s in SCENARIOS:
@@ -72,11 +68,8 @@ def get_breakdown_max():
 
 def get_capacity_tolerance_split(usia, penghasilan, horizon, responses, fh_answers=None):
     """
-    Pisahin Risk Capacity (objektif) vs Behavioral Tolerance (subjektif).
-    
-    Capacity sekarang termasuk Financial Health (Hasanah et al. 2024):
-    - Usia, Penghasilan, Horizon (original)
-    - Dana darurat, Rasio utang, Tanggungan, Net worth, Rumah (new)
+    Split Risk Capacity (objective) vs Behavioral Tolerance (subjective).
+    Capacity includes Financial Health factors: dana darurat, rasio utang, tanggungan, net worth, rumah.
     """
     # === Original capacity factors ===
     cap_score = 0
@@ -94,7 +87,7 @@ def get_capacity_tolerance_split(usia, penghasilan, horizon, responses, fh_answe
 
     cap_max = MAX_USIA_SCORE + MAX_PENGHASILAN_SCORE + MAX_HORIZON_SCORE
 
-    # === Financial Health bonus (new) ===
+    # === Financial Health bonus ===
     fh_score = 0
     fh_max = 0
     fh_data = None
@@ -103,7 +96,6 @@ def get_capacity_tolerance_split(usia, penghasilan, horizon, responses, fh_answe
         fh_score = fh_data["score"]
         fh_max = fh_data["max"]
 
-    # Combined capacity: original + financial health
     total_cap_score = cap_score + fh_score
     total_cap_max = cap_max + fh_max
 
@@ -131,7 +123,7 @@ def get_capacity_tolerance_split(usia, penghasilan, horizon, responses, fh_answe
 
 
 def get_behavioral_breakdown(responses):
-    """Detail breakdown per komponen Behavioral Loss Tolerance."""
+    """Detail breakdown per Behavioral Loss Tolerance component."""
     category_data = {}
     for i, s in enumerate(SCENARIOS):
         cat = s["category"]
@@ -163,7 +155,7 @@ def get_behavioral_breakdown(responses):
 
 
 def get_insight_text(capacity_pct, tolerance_pct):
-    """Generate insight berdasarkan perbedaan capacity vs tolerance."""
+    """Generate insight based on capacity vs tolerance difference."""
     diff = capacity_pct - tolerance_pct
     
     if diff > 20:
@@ -199,33 +191,24 @@ def calculate_score(usia, penghasilan, horizon, responses):
 
 def get_risk_number(effective_pct):
     """
-    Map effective percentage to 1-99 Risk Number (Riskalyze/Nitrogen style).
-    
-    Source: Nitrogen Wealth (formerly Riskalyze) — Risk Number® 1-99 scale
-    Source: SCF 2016 — 11-level risk tolerance measure
-    
+    Map effective percentage to 1-99 Risk Number scale.
+
     Mapping:
-    1-20: Very Conservative (instruments: deposits, RDPU)
-    21-40: Conservative (instruments: obligasi pemerintah, RDPT)
-    41-60: Moderate (instruments: reksadana campuran, saham blue-chip)
-    61-80: Growth (instruments: saham IDX, reksadana saham)
-    81-99: Aggressive (instruments: saham small-cap, crypto, forex)
-    
-    Why 1-99 instead of 1-100: Nitrogen uses 1-99 because 100 implies certainty,
-    which doesn't exist in investing. 99 = highest risk without implying guaranteed outcome.
+    1-20: Very Conservative
+    21-40: Conservative
+    41-60: Moderate
+    61-80: Growth
+    81-99: Aggressive
+
+    Uses 1-99 instead of 1-100 because 100 implies certainty.
     """
-    # Clamp to 0-100
     pct = max(0, min(100, effective_pct))
-    # Map to 1-99
     risk_number = max(1, min(99, round(pct * 0.98 + 1)))
     return risk_number
 
 
 def get_risk_number_details(risk_number):
-    """
-    Dapatkan detail berdasarkan Risk Number.
-    Returns: category, color, description, suggested allocations.
-    """
+    """Get category details for a given Risk Number (color, description, allocations)."""
     if risk_number <= 20:
         return {
             "category": "Very Conservative",
@@ -277,13 +260,13 @@ def get_profile(score, usia=None, penghasilan=None, horizon=None, responses=None
                 allocations=None, fh_answers=None, oc_result=None, la_result=None):
     """
     Determine risk profile using CFA Institute IRP approach.
-    
-    Enhancements over basic CFA model:
-    1. min(capacity, tolerance) — binding constraint governs (CFA IRP)
-    2. Financial health in capacity — Hasanah et al. 2024
-    3. Overconfidence adjustment — Wealthfront model
-    4. Loss aversion factor — Kahneman & Tversky 1979
-    5. Traffic light reconciliation — CFA IRP 27-combination system
+
+    Key behaviors:
+    1. min(capacity, tolerance) — binding constraint governs
+    2. Financial health factors included in capacity
+    3. Overconfidence adjustment applied when detected
+    4. Loss aversion penalty when coefficient > 2.0
+    5. Traffic light reconciliation for factor alignment
     """
     alloc = allocations or ALLOCATIONS
     
@@ -292,30 +275,24 @@ def get_profile(score, usia=None, penghasilan=None, horizon=None, responses=None
         cap_pct = ct["capacity"]["pct"]
         tol_pct = ct["tolerance"]["pct"]
         
-        # Profile determined by the LOWER of the two (more conservative)
-        # This follows CFA Institute IRP: "the binding constraint governs"
         effective_pct = min(cap_pct, tol_pct)
         
-        # === Overconfidence Adjustment (Wealthfront model) ===
+        # === Overconfidence Adjustment ===
         oc_penalty = 0
         if oc_result and oc_result.get("adjusted"):
-            # Reduce effective % by overconfidence severity
-            oc_penalty = oc_result["score"] * 0.15  # max 15% penalty
+            oc_penalty = oc_result["score"] * 0.15
             effective_pct = max(0, effective_pct - oc_penalty)
         
-        # === Loss Aversion Adjustment (Kahneman) ===
+        # === Loss Aversion Adjustment ===
         la_penalty = 0
         if la_result and la_result.get("coefficient"):
             coeff = la_result["coefficient"]
             if coeff > 2.0:
-                # High loss aversion → more conservative
-                la_penalty = (coeff - 2.0) * 10  # 10% per 0.1 above 2.0
+                la_penalty = (coeff - 2.0) * 10
                 effective_pct = max(0, effective_pct - la_penalty)
         
-        # Growth potential
         growth_potential = max(cap_pct, tol_pct) - min(cap_pct, tol_pct)
         
-        # === Traffic Light Reconciliation ===
         traffic_light = _get_traffic_light(cap_pct, tol_pct, oc_result, la_result)
     else:
         # Fallback: use blended score (backward compatibility)
@@ -327,7 +304,6 @@ def get_profile(score, usia=None, penghasilan=None, horizon=None, responses=None
         oc_penalty = 0
         la_penalty = 0
     
-    # Thresholds based on effective percentage
     if effective_pct <= 30:
         profile_name = "KONSERVATIF"
     elif effective_pct <= 65:
@@ -349,20 +325,13 @@ def get_profile(score, usia=None, penghasilan=None, horizon=None, responses=None
 
 def _get_traffic_light(cap_pct, tol_pct, oc_result=None, la_result=None):
     """
-    CFA Institute Traffic Light Reconciliation.
-    
-    GREEN: All factors aligned — proceed with profile.
-    YELLOW: Behavioral factors mismatch capacity — caution/education needed.
-    RED: Risk need exceeds capacity — reevaluate goals.
-    
-    Source: CFA Institute IRP 27-combination system.
+    Traffic Light Reconciliation.
+    GREEN: All factors aligned. YELLOW: Behavioral mismatch — caution needed.
+    RED: Risk need exceeds capacity or high bias detected — reevaluate.
     """
     diff = abs(cap_pct - tol_pct)
     
-    # Check for overconfidence flags
     has_oc = oc_result and oc_result.get("level") in ("MODERAT", "TINGGI")
-    
-    # Check for high loss aversion
     has_high_la = la_result and la_result.get("coefficient", 0) > 2.5
     
     if diff > 30 or has_oc or has_high_la:

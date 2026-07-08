@@ -13,28 +13,21 @@ from goals import render_step_goals, calculate_goal_analysis
 from config import get_allocations
 from results import show_results
 
-# Setup
 st.set_page_config(**PAGE_CONFIG)
 
-# Dark mode toggle at TOP of page (visible without sidebar)
 col1, col2 = st.columns([6, 1])
 with col2:
     dark_mode = st.toggle("🌙", value=True, key="dark_mode_toggle", help="Toggle dark/light mode")
 
-# Set colors based on mode
 st.session_state.theme = "dark" if dark_mode else "light"
-
-# Inject CSS based on theme
 st.markdown(get_css(dark_mode=dark_mode), unsafe_allow_html=True)
 
-# Inject particles — re-inject when theme changes
 prev_theme = st.session_state.get("particles_theme")
 if "particles_injected" not in st.session_state or prev_theme != dark_mode:
     st.html(get_particles_js(dark_mode=dark_mode))
     st.session_state.particles_injected = True
     st.session_state.particles_theme = dark_mode
 
-# State wizard
 if "step" not in st.session_state:
     st.session_state.step = 1
 if "form_data" not in st.session_state:
@@ -42,18 +35,15 @@ if "form_data" not in st.session_state:
 if "result" not in st.session_state:
     st.session_state.result = None
 
-# Hero only on step 1
 if st.session_state.step == 1:
     header(dark_mode=dark_mode)
 
-# Progress steps — now 4 steps
 progress_steps(st.session_state.step, labels=("Data Diri", "Skenario", "Financial", "Hasil"), dark_mode=dark_mode)
 
 # ---------- STEP 1: Data Diri + Goals ----------
 if st.session_state.step == 1:
     nama, usia, penghasilan, horizon, lanjut = render_step_data_diri()
     
-    # Goal inputs (below personal data form)
     goals_data = render_step_goals()
     
     if lanjut:
@@ -93,7 +83,6 @@ elif st.session_state.step == 2:
                 nums = ", ".join([f"#{n}" for n in unanswered])
                 st.warning(f"⚠️ Masih ada {len(unanswered)} skenario yang belum dijawab: {nums}")
         else:
-            # Save responses and overconfidence detection
             st.session_state.form_data["responses"] = responses
             oc = detect_overconfidence(responses)
             st.session_state.form_data["overconfidence"] = oc
@@ -110,7 +99,6 @@ elif st.session_state.step == 3:
     with tab_la:
         la_responses = render_step_loss_aversion()
 
-    # Unified navigation below both tabs
     st.markdown("<hr>", unsafe_allow_html=True)
     col_back, col_analyze = st.columns([1, 3])
     with col_back:
@@ -123,14 +111,12 @@ elif st.session_state.step == 3:
         st.rerun()
 
     if lanjut:
-        # Check financial health completeness
         fh_incomplete = []
         from financial_health import FINANCIAL_HEALTH_QUESTIONS
         for q in FINANCIAL_HEALTH_QUESTIONS:
             if fh_answers.get(q["key"]) is None:
                 fh_incomplete.append(q["label"])
 
-        # Check loss aversion completeness
         la_incomplete = []
         from loss_aversion import LOSS_AVERSION_SCENARIOS
         for i, s in enumerate(LOSS_AVERSION_SCENARIOS):
@@ -142,7 +128,6 @@ elif st.session_state.step == 3:
         elif la_incomplete:
             st.warning(f"⚠️ Loss aversion belum dijawab: {', '.join(la_incomplete)}")
         else:
-            # All complete — analyze!
             with st.spinner("🔬 Analyzing risk profile..."):
                 time.sleep(1.0)
 
@@ -150,17 +135,13 @@ elif st.session_state.step == 3:
             responses = fd["responses"]
             oc_result = fd["overconfidence"]
 
-            # Process financial health
             fh_data = get_financial_health_score(fh_answers)
 
-            # Process loss aversion
             la_result = get_loss_aversion_score(la_responses)
 
-            # Calculate score
             breakdown = get_score_breakdown(fd["usia"], fd["penghasilan"], fd["horizon"], responses)
             score = calculate_score(fd["usia"], fd["penghasilan"], fd["horizon"], responses)
 
-            # Get profile with all factors
             allocations = get_allocations(dark_mode=dark_mode)
             profil_name, profile_data, profile_meta = get_profile(
                 score, fd["usia"], fd["penghasilan"], fd["horizon"], responses,
@@ -171,12 +152,10 @@ elif st.session_state.step == 3:
             )
             max_score = get_max_score()
 
-            # Risk Number (1-99 continuous scale)
             effective_pct = profile_meta.get("effective_pct", 50)
             risk_number = get_risk_number(effective_pct)
             risk_details = get_risk_number_details(risk_number)
 
-            # Goal-Based Risk Need Analysis
             goal_analysis = calculate_goal_analysis(fd.get("goals", {}))
 
             st.session_state.result = {

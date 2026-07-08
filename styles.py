@@ -1,4 +1,3 @@
-# CSS & Animations — Final version with proper dual theme
 from config import COLORS_DARK, COLORS_LIGHT
 
 def get_css(dark_mode=True):
@@ -452,5 +451,4 @@ def get_particles_js(dark_mode=True):
 
 def get_counter_js(score, max_score):
     """Score counter — returns empty string (score rendered directly in HTML banner)."""
-    # JS animation unreliable in Streamlit's st.html() — score rendered directly
     return ""
